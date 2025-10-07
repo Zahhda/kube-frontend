@@ -9,7 +9,7 @@
     },
     {
       "source": "/api/verify/:path*",
-      "destination": "https://kube-credential-verification.vercel.app/:path*"
+      "destination": "https://verification-kube.vercel.app/:path*"
     },
     {
       "source": "/(.*)",
