@@ -4,12 +4,20 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/issue",
+      "destination": "https://kube-credential-issuance.vercel.app/issue"
+    },
+    {
       "source": "/api/issue/:path*",
-      "destination": "https://kube-credential-issuance.vercel.app/:path*"
+      "destination": "https://kube-credential-issuance.vercel.app/issue/:path*"
+    },
+    {
+      "source": "/api/verify",
+      "destination": "https://verification-kube.vercel.app/verify"
     },
     {
       "source": "/api/verify/:path*",
-      "destination": "https://verification-kube.vercel.app/:path*"
+      "destination": "https://verification-kube.vercel.app/verify/:path*"
     },
     {
       "source": "/(.*)",
