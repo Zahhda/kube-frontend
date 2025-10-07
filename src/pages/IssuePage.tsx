@@ -2,9 +2,11 @@ import { useState } from 'react';
 import axios from 'axios';
 import { mockIssueCredential } from '../services/mockApi';
 
-// Use real API if available, otherwise use mock
-const ISSUANCE_API = import.meta.env.VITE_ISSUANCE_API || 'http://localhost:3001';
-const USE_MOCK_API = false; // Set to false to use real backend
+// Prefer Vercel rewrites in production, fall back to env or localhost in dev
+const ISSUANCE_API =
+  (import.meta as any).env?.VITE_ISSUANCE_API ||
+  (typeof window !== 'undefined' ? '/api/issue' : 'http://localhost:3001/issue');
+const USE_MOCK_API = false;
 
 const IssuePage = () => {
   const [jsonInput, setJsonInput] = useState('{\n  "id": "credential-123",\n  "type": "example",\n  "data": "sample-data"\n}');
@@ -27,7 +29,7 @@ const IssuePage = () => {
         result = await mockIssueCredential(credential);
       } else {
         // Use real API
-        result = await axios.post(`${ISSUANCE_API}/issue`, credential, {
+        result = await axios.post(`${ISSUANCE_API}` , credential, {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'

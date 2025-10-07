@@ -2,9 +2,11 @@ import { useState } from 'react';
 import axios from 'axios';
 import { mockVerifyCredential } from '../services/mockApi';
 
-// Use real API if available, otherwise use mock
-const VERIFICATION_API = import.meta.env.VITE_VERIFICATION_API || 'http://localhost:3002';
-const USE_MOCK_API = false; // Set to false to use real backend
+// Prefer Vercel rewrites in production, fall back to env or localhost in dev
+const VERIFICATION_API =
+  (import.meta as any).env?.VITE_VERIFICATION_API ||
+  (typeof window !== 'undefined' ? '/api/verify' : 'http://localhost:3002/verify');
+const USE_MOCK_API = false;
 
 const VerifyPage = () => {
   const [jsonInput, setJsonInput] = useState('{\n  "id": "credential-123"\n}');
@@ -27,7 +29,7 @@ const VerifyPage = () => {
         result = await mockVerifyCredential(credential);
       } else {
         // Send to verification service with CORS headers
-        result = await axios.post(`${VERIFICATION_API}/verify`, credential, {
+        result = await axios.post(`${VERIFICATION_API}`, credential, {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
