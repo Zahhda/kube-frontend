@@ -2,11 +2,13 @@ import { useState } from 'react';
 import axios from 'axios';
 import { mockIssueCredential } from '../services/mockApi';
 
-// Prefer Vercel rewrites in production, fall back to env or localhost in dev
+// Use environment variable or fall back to Vercel deployment
 const ISSUANCE_API =
   (import.meta as any).env?.VITE_ISSUANCE_API ||
-  (typeof window !== 'undefined' ? '/api/issue' : 'http://localhost:3001/issue');
-const USE_MOCK_API = false;
+  'https://insurance-kube.vercel.app';
+// Enable mock API as fallback when backend services are unavailable
+const USE_MOCK_API = (import.meta as any).env?.VITE_USE_MOCK_API === 'true' || false;
+const ENABLE_FALLBACK = true; // Enable automatic fallback to mock API on 500 errors
 
 const IssuePage = () => {
   const [jsonInput, setJsonInput] = useState('{\n  "id": "credential-123",\n  "type": "example",\n  "data": "sample-data"\n}');
@@ -28,14 +30,30 @@ const IssuePage = () => {
         // Use mock API
         result = await mockIssueCredential(credential);
       } else {
-        // Use real API
-        result = await axios.post(`${ISSUANCE_API}` , credential, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          timeout: 10000 // 10 second timeout
-        });
+        try {
+          // Use real API
+          result = await axios.post(`${ISSUANCE_API}/issue`, credential, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            timeout: 10000 // 10 second timeout
+          });
+        } catch (apiError: any) {
+          // If backend returns 500 error and fallback is enabled, use mock API
+          if (ENABLE_FALLBACK && apiError.response?.status === 500) {
+            console.warn('Backend service returned 500 error, falling back to mock API');
+            result = await mockIssueCredential(credential);
+            // Add a note to the response indicating fallback was used
+            result.data = {
+              ...result.data,
+              _note: 'Backend service unavailable - using mock response',
+              _fallback: true
+            };
+          } else {
+            throw apiError;
+          }
+        }
       }
       setResponse(result.data);
     } catch (err: any) {
