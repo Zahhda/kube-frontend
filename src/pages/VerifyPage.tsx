@@ -11,10 +11,22 @@ const USE_MOCK_API = (import.meta as any).env?.VITE_USE_MOCK_API === 'true' || f
 const ENABLE_FALLBACK = true; // Enable automatic fallback to mock API on 500 errors
 
 const VerifyPage = () => {
-  const [jsonInput, setJsonInput] = useState('{\n  "id": "credential-123"\n}');
+  const [credentialId, setCredentialId] = useState('');
   const [response, setResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Sample credential IDs for testing
+  const loadSampleCredentialId = () => {
+    const sampleIds = [
+      'cred-education-2024',
+      'cred-employment-001',
+      'cred-certification-abc123',
+      'credential-123'
+    ];
+    const randomId = sampleIds[Math.floor(Math.random() * sampleIds.length)];
+    setCredentialId(randomId);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,8 +34,10 @@ const VerifyPage = () => {
     setError(null);
 
     try {
-      // Parse JSON input
-      const credential = JSON.parse(jsonInput);
+      // Build credential object with ID
+      const credential = {
+        id: credentialId.trim()
+      };
 
       let result;
       if (USE_MOCK_API) {
@@ -58,9 +72,7 @@ const VerifyPage = () => {
       setResponse(result.data);
     } catch (err: any) {
       console.error('API Error:', err);
-      if (err.message.includes('JSON')) {
-        setError('Invalid JSON format');
-      } else if (err.response) {
+      if (err.response) {
         setError(`Error: ${err.response.data?.error || 'Server error'} (${err.response.status})`);
       } else if (err.message.includes('Network Error') || err.message.includes('timeout')) {
         setError('Network Error: Backend service is not running or not accessible. Please start the verification service on port 3002.');
@@ -77,17 +89,29 @@ const VerifyPage = () => {
       <h2 className="text-2xl font-bold mb-6 text-center">Credential Verification System</h2>
 
       <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-md shadow-sm">
-        <h3 className="text-lg font-semibold text-green-800 mb-2">Instructions</h3>
-        <p className="text-green-700 mb-2">
-          This page allows you to verify credentials in the Kube Credential system. Follow these steps:
+        <h3 className="text-lg font-semibold text-green-800 mb-2">Credential Verification</h3>
+        <p className="text-green-700 mb-4">
+          Verify the authenticity of digital credentials by entering the credential ID. You can enter a specific ID or use our sample data for testing.
         </p>
-        <ol className="list-decimal list-inside text-green-700 ml-2">
-          <li className="mb-1">Enter the credential ID in valid JSON format in the text area below</li>
-          <li className="mb-1">Click the "Verify Credential Authenticity" button to submit</li>
-          <li className="mb-1">The system will check if the credential exists and display the result</li>
-          <li className="mb-1">You'll see which worker pod processed your verification request</li>
-        </ol>
-        <p className="text-green-700 mt-2 text-sm italic">
+        
+        <div className="flex gap-4 mb-4">
+          <button
+            type="button"
+            onClick={loadSampleCredentialId}
+            className="px-4 py-2 rounded-md font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+          >
+            Load Sample Credential ID
+          </button>
+          <button
+            type="button"
+            onClick={() => setCredentialId('')}
+            className="px-4 py-2 rounded-md font-medium bg-white text-green-600 border border-green-600 hover:bg-green-50 transition-colors"
+          >
+            Clear Field
+          </button>
+        </div>
+        
+        <p className="text-green-700 text-sm">
           Note: Only previously issued credentials can be successfully verified.
         </p>
       </div>
@@ -96,18 +120,22 @@ const VerifyPage = () => {
         {/* Left side - Input form */}
         <div className="flex-1">
           <form onSubmit={handleSubmit} className="mb-4">
-            <div className="mb-4">
-              <label htmlFor="json" className="block text-gray-700 mb-2 font-semibold">
-                Input Credential to Verify
+            <div className="mb-6">
+              <label htmlFor="credentialId" className="block text-gray-700 mb-2 font-semibold">
+                Credential ID to Verify
               </label>
-              <textarea
-                id="json"
-                rows={10}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                value={jsonInput}
-                onChange={(e) => setJsonInput(e.target.value)}
+              <input
+                id="credentialId"
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm text-lg"
+                value={credentialId}
+                onChange={(e) => setCredentialId(e.target.value)}
                 required
+                placeholder="Enter credential ID (e.g., cred-education-2024)"
               />
+              <p className="text-sm text-gray-600 mt-2">
+                Enter the unique identifier of the credential you want to verify
+              </p>
             </div>
 
             <button
